@@ -16,7 +16,7 @@ require('dotenv').config();
 // client creation
 const token = process.env.BOT_TOKEN;
 const client = new Client({ intents: ['GUILDS', 'GUILD_MESSAGES', 'GUILD_VOICE_STATES'] });
-const dootChance = process.env.DOOT_CHANCE || 0.66;
+const dootChance = process.env.DOOT_CHANCE || 0.25;
 
 // command registration
 client.commands = new Collection();
@@ -36,7 +36,7 @@ client.on('ready', async () => {
         let rand = Math.random();
         console.log('Doot Roll: ' + rand);
         if (rand >= (1 - dootChance)) bigDoot(client);
-    }, 1e3 * 20 * 1);
+    }, 1e3 * 60 * 15);
 });
 
 // on client interaction
