@@ -8,6 +8,7 @@ const {
     AudioPlayerStatus,
     VoiceConnectionStatus,
 } = require('@discordjs/voice');
+const { bigDoot } = require('./services/bigDoot');
 
 const fs = require('fs');
 require('dotenv').config();
@@ -15,6 +16,7 @@ require('dotenv').config();
 // client creation
 const token = process.env.BOT_TOKEN;
 const client = new Client({ intents: ['GUILDS', 'GUILD_MESSAGES', 'GUILD_VOICE_STATES'] });
+const dootChance = process.env.DOOT_CHANCE || 0.66;
 
 // command registration
 client.commands = new Collection();
@@ -24,34 +26,17 @@ for (const file of commandFiles) {
     client.commands.set(command.data.name, command);
 }
 
-// audio player setup
-const player = createAudioPlayer();
-
-function playSong() {
-    const resource = createAudioResource('./doot.mp3', { inputType: StreamType.Arbitrary });
-    player.play(resource);
-    return entersState(player, AudioPlayerStatus.Playing, 5e3);
-}
-
-async function connectToChannel(channel) {
-    const connection = joinVoiceChannel({
-        channelId: channel.id,
-        guildId: channel.guild.id,
-        adapterCreator: channel.guild.voiceAdapterCreator,
-    });
-    try {
-        await entersState(connection, VoiceConnectionStatus.Ready, 30e3);
-        return connection;
-    } catch (err) {
-        connection.destroy();
-        throw err;
-    }
-}
-
 // on client login
 client.on('ready', async () => {
     console.log(`Logged in as "${client.user.username}"`);
     console.log(`Connected to ${client.guilds.cache.size} server(s)`);
+    console.log(`Current Doot Chance = ${dootChance * 100}%`);
+
+    setInterval(() => {
+        let rand = Math.random();
+        console.log('Doot Roll: ' + rand);
+        if (rand >= (1 - dootChance)) bigDoot(client);
+    }, 1e3 * 20 * 1);
 });
 
 // on client interaction
@@ -108,5 +93,29 @@ client.on('messageCreate', async (message) => {
         }
     }
 });
+
+// audio player setup
+const player = createAudioPlayer();
+
+function playSong() {
+    const resource = createAudioResource('./media/doot.mp3', { inputType: StreamType.Arbitrary });
+    player.play(resource);
+    return entersState(player, AudioPlayerStatus.Playing, 5e3);
+}
+
+async function connectToChannel(channel) {
+    const connection = joinVoiceChannel({
+        channelId: channel.id,
+        guildId: channel.guild.id,
+        adapterCreator: channel.guild.voiceAdapterCreator,
+    });
+    try {
+        await entersState(connection, VoiceConnectionStatus.Ready, 30e3);
+        return connection;
+    } catch (err) {
+        connection.destroy();
+        throw err;
+    }
+}
 
 client.login(token);

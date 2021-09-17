@@ -17,7 +17,7 @@ module.exports = {
         // audio player setup
         const player = createAudioPlayer();
         function playSong() {
-            const resource = createAudioResource('./doot.ogg', { inputType: StreamType.Arbitrary });
+            const resource = createAudioResource('./media/doot.ogg', { inputType: StreamType.Arbitrary });
             player.play(resource);
             return entersState(player, AudioPlayerStatus.Playing, 5e3);
         }
