@@ -1,10 +1,10 @@
-const { playFile, connectToChannel, createPlayer } = require('./voiceManager');
+const voice = require('./voiceManager');
 
 module.exports = {
     bigDoot: (client) => {
         console.log('\n---Big Doot Incoming---');
         var voiceChannels = [];
-        const player = createPlayer();
+        const player = voice.createPlayer();
         
         client.channels.cache.forEach((channel) => {
             if (channel.isVoice() && channel.members.size > 0) {
@@ -19,14 +19,12 @@ module.exports = {
                 console.log(`dooting ${channel.members.size} nerd(s)`);
                 try {
                     // setup audio player
-                    await playFile(player);
+                    await voice.playFile(player);
     
                     // join voice channel and play audio file
-                    const connection = await connectToChannel(channel);
+                    const connection = await voice.connectToChannel(channel);
                     connection.subscribe(player);
-                    player.on('stateChange', (oldState, newState) => {
-                        if (newState.status === 'idle') connection.destroy();
-                    });
+                    await voice.playerEnd(player, connection);
                 } catch (err) {
                     console.error(err);
                 }

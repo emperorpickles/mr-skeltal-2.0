@@ -30,5 +30,10 @@ module.exports = {
             connection.destroy();
             throw err;
         }
+    },
+    playerEnd: (player, connection) => {
+        player.on('stateChange', (oldState, newState) => {
+            if (oldState.status !== 'idle' && newState.status === 'idle') connection.destroy();
+        });
     }
 }

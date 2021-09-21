@@ -1,14 +1,6 @@
 const { Client, Collection, VoiceChannel, Intents } = require('discord.js');
-const {
-    joinVoiceChannel,
-    createAudioPlayer,
-    createAudioResource,
-    entersState,
-    StreamType,
-    AudioPlayerStatus,
-    VoiceConnectionStatus,
-} = require('@discordjs/voice');
 const { bigDoot } = require('./services/bigDoot');
+const voice = require('./services/voiceManager');
 
 const fs = require('fs');
 require('dotenv').config();
@@ -16,7 +8,9 @@ require('dotenv').config();
 // client creation
 const token = process.env.BOT_TOKEN;
 const client = new Client({ intents: ['GUILDS', 'GUILD_MESSAGES', 'GUILD_VOICE_STATES'] });
+
 const dootChance = process.env.DOOT_CHANCE || 0.25;
+const dootFreq = process.env.DOOT_FREQ || 20;
 
 // command registration
 client.commands = new Collection();
@@ -30,13 +24,13 @@ for (const file of commandFiles) {
 client.on('ready', async () => {
     console.log(`Logged in as "${client.user.username}"`);
     console.log(`Connected to ${client.guilds.cache.size} server(s)`);
-    console.log(`Current Doot Chance = ${dootChance * 100}%`);
+    console.log(`Current Doot Chance = ${dootChance * 100}%\nCurrent Doot Freq = ${dootFreq}min`);
 
     setInterval(() => {
         let rand = Math.random();
         console.log('Doot Roll: ' + rand);
         if (rand >= (1 - dootChance)) bigDoot(client);
-    }, 1e3 * 60 * 15);
+    }, 1e3 * 60 * dootFreq);
 });
 
 // on client interaction
@@ -72,50 +66,24 @@ client.on('messageCreate', async (message) => {
     }
 
     // join voice channel and doot
-    if (message.content === '-join') {
+    if (message.content === '!doot') {
         const channel = message.member?.voice.channel;
         if (channel) {
+            const player = voice.createPlayer();
             try {
-                // create audio player
-                await playSong();
-                console.log('Ready to play');
+                await voice.playFile(player);
 
                 // join voice channel and play audio file
-                const connection = await connectToChannel(channel);
+                const connection = await voice.connectToChannel(channel);
                 connection.subscribe(player);
-                await entersState(player, AudioPlayerStatus.Idle, 5e3);
-                connection.destroy();
+                await voice.playerEnd(player, connection);
             } catch (err) {
                 console.error(err);
             }
         } else {
-            message.reply('Join a voice channel');
+            await message.reply({ content: 'Join a voice channel', ephemeral: true });
         }
     }
 });
-
-// audio player setup
-const player = createAudioPlayer();
-
-function playSong() {
-    const resource = createAudioResource('./media/doot.mp3', { inputType: StreamType.Arbitrary });
-    player.play(resource);
-    return entersState(player, AudioPlayerStatus.Playing, 5e3);
-}
-
-async function connectToChannel(channel) {
-    const connection = joinVoiceChannel({
-        channelId: channel.id,
-        guildId: channel.guild.id,
-        adapterCreator: channel.guild.voiceAdapterCreator,
-    });
-    try {
-        await entersState(connection, VoiceConnectionStatus.Ready, 30e3);
-        return connection;
-    } catch (err) {
-        connection.destroy();
-        throw err;
-    }
-}
 
 client.login(token);
