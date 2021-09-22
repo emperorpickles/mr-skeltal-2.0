@@ -24,7 +24,7 @@ module.exports = {
                     // join voice channel and play audio file
                     const connection = await voice.connectToChannel(channel);
                     connection.subscribe(player);
-                    await voice.playerEnd(player, connection);
+                    voice.playerEnd(player, connection);
                 } catch (err) {
                     console.error(err);
                 }

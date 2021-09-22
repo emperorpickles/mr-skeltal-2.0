@@ -1,6 +1,5 @@
-const { Client, Collection, VoiceChannel, Intents } = require('discord.js');
+const { Client, Collection } = require('discord.js');
 const { bigDoot } = require('./services/bigDoot');
-const voice = require('./services/voiceManager');
 
 const fs = require('fs');
 require('dotenv').config();
@@ -38,13 +37,13 @@ client.on('interactionCreate', async interaction => {
     if (!interaction.isCommand()) return;
 
     const command = client.commands.get(interaction.commandName);
-    if (!command) return;
-
-    try {
-        await command.execute(interaction);
-    } catch (err) {
-        console.error(err);
-        await interaction.reply({ content: 'Error executing this command!', ephemeral: true });
+    if (command) {
+        try {
+            await command.execute(interaction);
+        } catch (err) {
+            console.error(err);
+            await interaction.reply({ content: 'Error executing this command!', ephemeral: true });
+        }
     }
 });
 
@@ -53,36 +52,39 @@ client.on('messageCreate', async (message) => {
     if (!message.guild) return;
     if (!client.application?.owner) await client.application?.fetch();
 
+    let args = message.content.slice(1).split(/ +/);
+    let commandName = args.shift().toLowerCase();
+    let command = client.commands.get(commandName);
+
+    if (command) {
+        try {
+            await command.execute(message);
+        } catch (err) {
+            console.error(err);
+            await message.reply({ content: 'Error executing this command!', ephemeral: true });
+        }
+    }
+
     // deploy new commands as interactions
-    if (message.content.toLowerCase() === '!deploy' && message.author.id === client.application?.owner?.id) {
+    if (commandName === 'deploy' && message.author.id === client.application?.owner?.id) {
         let commands = [];
         console.log('Deploying Commands:')
         client.commands.forEach((v, k) => {
             console.log(v.data);
             commands.push(v.data);
         });
-        await message.guild.commands.set(commands);
+        await client.application.commands.set(commands);
         await message.reply({ content: 'Deployed', ephemeral: true });
     }
-
-    // join voice channel and doot
-    if (message.content === '!doot') {
-        const channel = message.member?.voice.channel;
-        if (channel) {
-            const player = voice.createPlayer();
-            try {
-                await voice.playFile(player);
-
-                // join voice channel and play audio file
-                const connection = await voice.connectToChannel(channel);
-                connection.subscribe(player);
-                await voice.playerEnd(player, connection);
-            } catch (err) {
-                console.error(err);
-            }
-        } else {
-            await message.reply({ content: 'Join a voice channel', ephemeral: true });
-        }
+    // print out registered commands
+    if (commandName === 'commands') {
+        await client.application.commands.fetch()
+            .then(commands => {
+                commands.forEach((command) => {
+                    console.log(command.name);
+                });
+            })
+            .catch(console.error);
     }
 });
 
