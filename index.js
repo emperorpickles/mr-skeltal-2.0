@@ -1,4 +1,5 @@
 const { Client, Collection } = require('discord.js');
+const { AutoPoster } = require('topgg-autoposter');
 const { bigDoot } = require('./services/bigDoot');
 
 const fs = require('fs');
@@ -10,6 +11,13 @@ const client = new Client({ intents: ['GUILDS', 'GUILD_MESSAGES', 'GUILD_VOICE_S
 
 const dootChance = process.env.DOOT_CHANCE || 0.25;
 const dootFreq = process.env.DOOT_FREQ || 20;
+
+// top.gg integration
+const ap = AutoPoster(process.env.TOPGG_TOKEN, client);
+
+ap.on('posted', () => {
+    console.log('---Posted Stats to Top.GG---');
+});
 
 // command registration
 client.commands = new Collection();
