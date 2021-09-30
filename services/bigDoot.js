@@ -5,14 +5,14 @@ module.exports = {
         console.log('\n---Big Doot Incoming---');
         var voiceChannels = [];
         const player = voice.createPlayer();
-        
+
         client.channels.cache.forEach((channel) => {
             if (channel.isVoice() && channel.members.size > 0) {
                 voiceChannels.push(channel);
             }
         });
         console.log(`Hitting ${voiceChannels.length} channels`);
-        
+
         voiceChannels.forEach(async (channel) => {
             var permissions = channel.permissionsFor(client.user);
             if (permissions.has('CONNECT') && permissions.has('SPEAK')) {
@@ -20,11 +20,13 @@ module.exports = {
                 try {
                     // setup audio player
                     await voice.playFile(player);
-    
+
                     // join voice channel and play audio file
                     const connection = await voice.connectToChannel(channel);
                     connection.subscribe(player);
-                    voice.playerEnd(player, connection);
+                    await voice.playerEnd(player).then(() => {
+                        if (connection) connection.destroy();
+                    });
                 } catch (err) {
                     console.error(err);
                 }

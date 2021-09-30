@@ -18,7 +18,9 @@ module.exports = {
                 const connection = await voice.connectToChannel(channel);
                 interaction.reply('DOOT DOOT');
                 connection.subscribe(player);
-                voice.playerEnd(player, connection);
+                await voice.playerEnd(player).then(() => {
+                    if (connection) connection.destroy();
+                });
             } catch (err) {
                 console.error(err);
             }

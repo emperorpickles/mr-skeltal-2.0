@@ -18,6 +18,16 @@ module.exports = {
         player.play(resource);
         return entersState(player, AudioPlayerStatus.Playing, 5e3);
     },
+    playerEnd: (player) => {
+        const awaitIdle = new Promise((resolve, reject) => {
+            player.on('stateChange', (oldState, newState) => {
+                if (oldState.status === 'playing' && newState.status === 'idle') {
+                    resolve('idle');
+                }
+            });
+        });
+        return awaitIdle;
+    },
     connectToChannel: async (channel) => {
         const connection = joinVoiceChannel({
             channelId: channel.id,
@@ -28,13 +38,18 @@ module.exports = {
             await entersState(connection, VoiceConnectionStatus.Ready, 30e3);
             return connection;
         } catch (err) {
-            connection.destroy();
+            if (connection) connection.destroy();
             throw err;
         }
     },
-    playerEnd: (player, connection) => {
-        player.on('stateChange', (oldState, newState) => {
-            if (oldState.status !== 'idle' && newState.status === 'idle') connection.destroy();
+    connectionEnd: (connection) => {
+        const awaitEnd = new Promise((resolve, reject) => {
+            connection.on('stateChange', (oldState, newState) => {
+                if (newState.status === 'destroyed') {
+                    resolve('destroyed');
+                }
+            });
         });
-    }
+        return awaitEnd;
+    },
 }
