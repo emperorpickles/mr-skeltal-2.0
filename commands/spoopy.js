@@ -17,7 +17,7 @@ module.exports = {
         if (channel) {
             try {
                 //create audio player
-                await voice.playFile(player, './media/spoopy.mp3', 0.2);
+                await voice.playFile(player, './media/spoopy.ogg', 0.2);
                 // join voice channel and play audio file
                 const connection = await voice.connectToChannel(channel);
 
