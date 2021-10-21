@@ -15,6 +15,7 @@ module.exports = {
             .setImage('https://media1.tenor.com/images/a369655bae5b5f8e8de548e631e80d19/tenor.gif?itemid=14585469')
 
         if (channel) {
+            console.log('spoopy dance');
             try {
                 //create audio player
                 await voice.playFile(player, './media/spoopy.ogg', 0.2);
@@ -25,7 +26,7 @@ module.exports = {
                     .then(async (msg) => {
                         await Promise.any([voice.playerEnd(player), voice.connectionEnd(connection)])
                             .then(() => {
-                                msg.delete().catch((err) => { return; });
+                                msg.delete().catch(() => { return; });
                             })
                             .catch((err) => { console.error(err) });
                     })

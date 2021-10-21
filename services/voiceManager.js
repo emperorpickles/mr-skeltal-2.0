@@ -12,6 +12,11 @@ module.exports = {
     createPlayer: () => {
         return createAudioPlayer();
     },
+    createResource: (file, vol) => {
+        var resource = createAudioResource(file, { inputType: StreamType.OggOpus, inlineVolume: true });
+        resource.volume.setVolume(vol || 1);
+        return resource;
+    },
     playFile: (player, file, vol) => {
         var resource = createAudioResource((file || './media/doot.ogg'), { inputType: StreamType.Arbitrary, inlineVolume: true });
         resource.volume.setVolume(vol || 1);

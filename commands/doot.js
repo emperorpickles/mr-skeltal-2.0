@@ -11,6 +11,7 @@ module.exports = {
 
         const channel = interaction.member?.voice.channel;
         if (channel) {
+            console.log('dooting');
             try {
                 // create audio player
                 await voice.playFile(player);
