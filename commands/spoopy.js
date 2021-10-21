@@ -26,7 +26,9 @@ module.exports = {
                     .then(async (msg) => {
                         await Promise.any([voice.playerEnd(player), voice.connectionEnd(connection)])
                             .then(() => {
-                                msg.delete().catch(() => { return; });
+                                try {
+                                    msg.delete();
+                                } catch (err) { return; }
                             })
                             .catch((err) => { console.error(err) });
                     })
