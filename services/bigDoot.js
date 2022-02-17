@@ -5,8 +5,6 @@ module.exports = {
     bigDoot: (client) => {
         console.log('\n---Big Doot Incoming---');
         var voiceChannels = [];
-        const player = voice.createPlayer();
-        player.setMaxListeners(20);
         const resource = voice.createResource('./media/doot.ogg');
 
         client.channels.cache.forEach((channel) => {
@@ -22,16 +20,17 @@ module.exports = {
                 console.log(`(${i + 1}/${voiceChannels.length}) dooting ${channel.members.size} nerd(s)`);
                 try {
                     // setup audio player
-                    // await voice.playFile(player);
+                    const player = voice.createPlayer();
                     player.play(resource);
-                    await entersState(player, AudioPlayerStatus.Playing, 5e3);
 
                     // join voice channel and play audio file
-                    const connection = await voice.connectToChannel(channel);
+                    await voice.connectToChannel(channel).catch(err => console.error(err));
+                    const connection = voice.getVoiceConnection(channel.guildId);
                     connection.subscribe(player);
                     await voice.playerEnd(player).then(() => {
                         try {
                             connection.destroy();
+                            player.stop();
                         } catch (err) { return; }
                     }).catch(err => {
                         console.error(err);

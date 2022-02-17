@@ -1,51 +1,36 @@
-const {
-    joinVoiceChannel,
-    createAudioPlayer,
-    createAudioResource,
-    entersState,
-    StreamType,
-    AudioPlayerStatus,
-    VoiceConnectionStatus,
-} = require('@discordjs/voice');
+const voice = require('@discordjs/voice');
 
 module.exports = {
     createPlayer: () => {
-        return createAudioPlayer();
+        return voice.createAudioPlayer();
     },
     createResource: (file, vol) => {
-        var resource = createAudioResource(file, { inputType: StreamType.OggOpus, inlineVolume: true });
+        const resource = voice.createAudioResource(file, { inputType: voice.StreamType.OggOpus, inlineVolume: true });
         resource.volume.setVolume(vol || 1);
         return resource;
     },
     playFile: (player, file, vol) => {
-        var resource = createAudioResource((file || './media/doot.ogg'), { inputType: StreamType.Arbitrary, inlineVolume: true });
+        const resource = voice.createAudioResource((file || './media/doot.ogg'), { inputType: voice.StreamType.OggOpus, inlineVolume: true });
         resource.volume.setVolume(vol || 1);
         player.play(resource);
-        return entersState(player, AudioPlayerStatus.Playing, 5e3);
     },
-    playerEnd: (player) => {
-        const awaitIdle = new Promise((resolve, reject) => {
-            player.on('stateChange', (oldState, newState) => {
+    playerEnd: async (player) => {
+        const awaitEnd = new Promise((resolve, reject) => {
+            player.once(voice.AudioPlayerStatus.Idle, (oldState, newState) => {
                 if (oldState.status === 'playing' && newState.status === 'idle') {
-                    resolve('idle');
+                    resolve();
                 }
             });
         });
-        return awaitIdle;
+        return awaitEnd;
     },
     connectToChannel: async (channel) => {
-        const connection = joinVoiceChannel({
+        const connection = voice.joinVoiceChannel({
             channelId: channel.id,
             guildId: channel.guild.id,
             adapterCreator: channel.guild.voiceAdapterCreator,
         });
-        try {
-            await entersState(connection, VoiceConnectionStatus.Ready, 30e3);
-            return connection;
-        } catch (err) {
-            if (connection) connection.destroy();
-            throw err;
-        }
+        return await voice.entersState(connection, voice.VoiceConnectionStatus.Ready, 30e3);
     },
     connectionEnd: (connection) => {
         const awaitEnd = new Promise((resolve, reject) => {
@@ -57,4 +42,7 @@ module.exports = {
         });
         return awaitEnd;
     },
+    getVoiceConnection: (guildId) => {
+        return voice.getVoiceConnection(guildId);
+    }
 }

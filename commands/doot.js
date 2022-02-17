@@ -13,12 +13,14 @@ module.exports = {
         if (channel) {
             console.log('dooting');
             try {
-                // create audio player
-                await voice.playFile(player);
+                // play audio file
+                voice.playFile(player, './media/doot.ogg');
                 // join voice channel and play audio file
-                const connection = await voice.connectToChannel(channel);
-                interaction.reply('DOOT DOOT');
+                await voice.connectToChannel(channel).catch(err => console.error(err));
+                const connection = voice.getVoiceConnection(channel.guildId);
                 connection.subscribe(player);
+
+                interaction.reply('DOOT DOOT');
                 await voice.playerEnd(player).then(() => {
                     if (connection) connection.destroy();
                 });
