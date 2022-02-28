@@ -5,7 +5,6 @@ module.exports = {
     bigDoot: (client) => {
         console.log('\n---Big Doot Incoming---');
         var voiceChannels = [];
-        const resource = voice.createResource('./media/doot.ogg');
 
         client.channels.cache.forEach((channel) => {
             if (channel.isVoice() && channel.members.size > 0) {
@@ -21,6 +20,7 @@ module.exports = {
                 try {
                     // setup audio player
                     const player = voice.createPlayer();
+                    const resource = voice.createOggResource('./media/doot.ogg');
                     player.play(resource);
 
                     // join voice channel and play audio file
@@ -31,6 +31,7 @@ module.exports = {
                         try {
                             connection.destroy();
                             player.stop();
+                            resource = null;
                         } catch (err) { return; }
                     }).catch(err => {
                         console.error(err);

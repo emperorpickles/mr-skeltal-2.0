@@ -1,4 +1,5 @@
 const voice = require('@discordjs/voice');
+const { createReadStream } = require('node:fs');
 
 module.exports = {
     createPlayer: () => {
@@ -8,6 +9,9 @@ module.exports = {
         const resource = voice.createAudioResource(file, { inputType: voice.StreamType.OggOpus, inlineVolume: true });
         resource.volume.setVolume(vol || 1);
         return resource;
+    },
+    createOggResource: (file) => {
+        return voice.createAudioResource(createReadStream(file, { inputType: voice.StreamType.OggOpus }));
     },
     playFile: (player, file, vol) => {
         const resource = voice.createAudioResource((file || './media/doot.ogg'), { inputType: voice.StreamType.OggOpus, inlineVolume: true });
