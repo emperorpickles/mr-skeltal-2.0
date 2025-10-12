@@ -1,50 +1,51 @@
-const { entersState, AudioPlayerStatus } = require('@discordjs/voice');
 const { ChannelType, PermissionsBitField } = require('discord.js');
 const voice = require('./voiceManager');
 
 module.exports = {
     bigDoot: (client) => {
         console.log('\n---Big Doot Incoming---');
-        var voiceChannels = [];
+        const voiceChannels = [];
 
         client.channels.cache.forEach((channel) => {
-            if (channel.type == ChannelType.GuildVoice && channel.members.size > 0) {
+            if (channel.type === ChannelType.GuildVoice && channel.members.size > 0) {
                 voiceChannels.push(channel);
             }
         });
+
         console.log(`Hitting ${voiceChannels.length} channels`);
 
-        voiceChannels.forEach(async (channel, i) => {
-            var permissions = channel.permissionsFor(client.user);
-            //if (permissions.has('CONNECT') && permissions.has('SPEAK')) {
-            if (permissions.has([PermissionsBitField.Flags.Connect, PermissionsBitField.Flags.Speak])) {
-                console.log(`(${i + 1}/${voiceChannels.length}) dooting ${channel.members.size} nerd(s)`);
-                try {
-                    // setup audio player
-                    const player = voice.createPlayer();
-                    const resource = voice.createOggResource('./media/doot.ogg');
-                    player.play(resource);
+        voiceChannels.forEach(async (channel, index) => {
+            const permissions = channel.permissionsFor(client.user);
 
-                    // join voice channel and play audio file
-                    await voice.connectToChannel(channel).catch(err => console.error(err));
-                    const connection = voice.getVoiceConnection(channel.guildId);
-                    connection.subscribe(player);
-                    await voice.playerEnd(player).then(() => {
-                        try {
-                            connection.destroy();
-                            player.stop();
-                            resource = null;
-                        } catch (err) { return; }
-                    }).catch(err => {
-                        console.error(err);
-                    });
-                } catch (err) {
-                    console.error(err);
-                }
-            } else {
+            if (!permissions?.has([PermissionsBitField.Flags.Connect, PermissionsBitField.Flags.Speak])) {
                 console.log('lack permissions to join channel :(');
+                return;
+            }
+
+            console.log(`(${index + 1}/${voiceChannels.length}) dooting ${channel.members.size} nerd(s)`);
+
+            try {
+                const player = voice.createPlayer();
+
+                let connection = voice.getVoiceConnection(channel.guild.id);
+                if (!connection || connection.joinConfig.channelId !== channel.id) {
+                    connection = await voice.connectToChannel(channel);
+                }
+
+                const currentSubscription = connection.state.subscription;
+                currentSubscription?.player?.stop(true);
+
+                connection.subscribe(player);
+                await voice.playFile(player, './media/doot.ogg', undefined, true);
+                await voice.playerEnd(player);
+
+                connection.destroy();
+                player.stop();
+            } catch (error) {
+                console.error(error);
             }
         });
+
         console.log('---Doots Doot Dooted---\n');
-    }
-}
+    },
+};

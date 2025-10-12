@@ -6,35 +6,39 @@ module.exports = {
         .setName('doot')
         .setDescription('doot doot'),
     async execute(interaction) {
-        // audio player setup
         const player = voice.createPlayer();
-
         const channel = interaction.member?.voice.channel;
-        if (channel) {
-            console.log('dooting');
-            try {
-		await interaction.deferReply();
-                // play audio file
-                voice.playFile(player, './media/doot.ogg');
-                // join voice channel and play audio file
-                await voice.connectToChannel(channel).catch(err => console.error(err));
-                const connection = voice.getVoiceConnection(channel.guildId);
-                connection.subscribe(player);
 
-		player.on('error', (error) => {
-		    console.error('Error:', error.message, 'with track', error.resource.metadata.title);
-		});
+        if (!channel) {
+            await interaction.reply({ content: 'Need to be in voice channel', ephemeral: true });
+            return;
+        }
 
-                await voice.playerEnd(player).then(() => {
-		    console.debug('Player ended!')
-                    if (connection) connection.destroy();
-                });
-                interaction.editReply('DOOT DOOT');
-            } catch (err) {
-                console.error(err);
+        console.log('dooting');
+
+        try {
+            await interaction.deferReply();
+
+            const connection = await voice.connectToChannel(channel);
+            const resource = await voice.playFile(player, './media/doot.ogg');
+            connection.subscribe(player);
+
+            player.on('error', (error) => {
+                const title = error.resource?.metadata?.title || resource?.metadata?.title || 'unknown';
+                console.error('Error:', error.message, 'with track', title);
+            });
+
+            await voice.playerEnd(player);
+            console.debug('Player ended!');
+
+            if (connection) {
+                connection.destroy();
             }
-        } else {
-            interaction.reply({ content: 'Need to be in voice channel', ephermal: true });
+
+            await interaction.editReply('DOOT DOOT');
+        } catch (err) {
+            console.error('Error!', err);
+            await interaction.editReply({ content: 'Unexpected error occurred!', ephemeral: true });
         }
     },
 };

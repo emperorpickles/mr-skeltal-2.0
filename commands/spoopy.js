@@ -1,61 +1,77 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
+const { EmbedBuilder, AttachmentBuilder } = require('discord.js');
+const { AudioPlayerStatus } = require('@discordjs/voice');
+const path = require('node:path');
 const voice = require('../services/voiceManager');
-const { MessageEmbed } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('spoopy')
         .setDescription('Lets get spoopy'),
     async execute(interaction) {
-        //audio player setup
         const player = voice.createPlayer();
         const channel = interaction.member?.voice.channel;
 
-        const skeltalGif = new MessageEmbed()
-            .setImage('https://media1.tenor.com/images/a369655bae5b5f8e8de548e631e80d19/tenor.gif?itemid=14585469')
+        if (!channel) {
+            await interaction.reply({ content: 'Need to be in voice channel', ephemeral: true });
+            return;
+        }
 
-        if (channel) {
-            console.log('spoopy dance');
-            try {
-                //create audio player
-                await voice.playFile(player, './media/spoopy.ogg', 0.2);
-                // join voice channel and play audio file
-                const connection = await voice.connectToChannel(channel);
+        const skeletonGifPath = path.join(__dirname, '../media/skeleton-dancing.gif');
+        const skeletonEmbed = new EmbedBuilder().setImage('attachment://skeleton-dancing.gif');
+        const skeletonAttachment = new AttachmentBuilder(skeletonGifPath, { name: 'skeleton-dancing.gif' });
 
-                interaction.reply('Lets get spoopy ;)')
-                    .then(async (msg) => {
-                        await Promise.any([voice.playerEnd(player), voice.connectionEnd(connection)])
-                            .then(() => {
-                                try {
-                                    msg.delete();
-                                } catch (err) { return; }
-                            })
-                            .catch((err) => { console.error(err) });
-                    })
-                    .catch(err => {
-                        console.error(err);
-                    })
-                interaction.channel.send({ embeds: [skeltalGif] })
-                    .then(async (msg) => {
-                        await Promise.any([voice.playerEnd(player), voice.connectionEnd(connection)])
-                            .then(() => {
-                                msg.delete().catch((err) => { return; });
-                            })
-                            .catch((err) => { console.error(err) });
-                    })
-                    .catch(err => {
-                        console.error(err);
-                    })
+        console.log('spoopy dance');
 
-                connection.subscribe(player);
-                await voice.playerEnd(player).then(() => {
-                    if (connection) connection.destroy();
-                });
-            } catch (err) {
-                console.error(err);
+        try {
+            const connection = await voice.connectToChannel(channel);
+            connection.subscribe(player);
+
+            const track = await voice.playFile(player, './media/spoopy.ogg', 0.2);
+            track.metadata = { title: 'Spoopy' };
+
+            const playerEndedPromise = voice.playerEnd(player);
+            const connectionEndedPromise = voice.connectionEnd(connection);
+            const cleanupPromise = Promise.any([playerEndedPromise, connectionEndedPromise]);
+
+            const replyMessage = await interaction.reply({
+                content: 'Lets get spoopy ;)',
+                fetchReply: true,
+            });
+
+            const embedMessage = await interaction.followUp({
+                embeds: [skeletonEmbed],
+                files: [skeletonAttachment],
+                fetchReply: true,
+            });
+
+            cleanupPromise
+                .then(() => {
+                    replyMessage.delete?.().catch(() => {});
+                    embedMessage.delete?.().catch(() => {});
+                })
+                .catch(console.error);
+
+            await playerEndedPromise;
+
+            const activePlayer = connection.state.subscription?.player;
+            if (activePlayer === player) {
+                connection.destroy();
             }
-        } else {
-            interaction.reply({ content: 'Need to be in voice channel', ephermal: true });
+
+            if (player.state.status !== AudioPlayerStatus.Idle) {
+                player.stop(true);
+            }
+        } catch (error) {
+            console.error(error);
+
+            const errorPayload = { content: 'Unexpected error occurred!', ephemeral: true };
+
+            if (interaction.deferred || interaction.replied) {
+                await interaction.followUp(errorPayload).catch(() => {});
+            } else {
+                await interaction.reply(errorPayload).catch(() => {});
+            }
         }
     },
 };

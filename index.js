@@ -1,4 +1,4 @@
-const { Client, Collection, GatewayIntentBits, Partials } = require('discord.js');
+const { Client, Collection, GatewayIntentBits } = require('discord.js');
 const { AutoPoster } = require('topgg-autoposter');
 const { bigDoot } = require('./services/bigDoot');
 
@@ -7,11 +7,8 @@ require('dotenv').config();
 
 // client creation
 const token = process.env.BOT_TOKEN;
-// const client = new Client({ intents: ['GUILDS', 'GUILD_MESSAGES', 'GUILD_VOICE_STATES'] });
 const client = new Client({
-	intents: [
-		GatewayIntentBits.Guilds
-	]
+    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates],
 });
 
 const dootChance = process.env.DOOT_CHANCE || 0.25;
@@ -28,7 +25,7 @@ if (process.env.TOPGG_TOKEN) {
 
 // command registration
 client.commands = new Collection();
-const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
+const commandFiles = fs.readdirSync('./commands').filter((file) => file.endsWith('.js'));
 for (const file of commandFiles) {
     const command = require(`./commands/${file}`);
     client.commands.set(command.data.name, command);
@@ -41,14 +38,14 @@ client.on('ready', async () => {
     console.log(`Current Doot Chance = ${dootChance * 100}%\nCurrent Doot Freq = ${dootFreq}min`);
 
     setInterval(() => {
-        let rand = Math.random();
+        const rand = Math.random();
         console.log('Doot Roll: ' + rand);
         if (rand >= (1 - dootChance)) bigDoot(client);
     }, 1e3 * 60 * dootFreq);
 });
 
 // on client interaction
-client.on('interactionCreate', async interaction => {
+client.on('interactionCreate', async (interaction) => {
     if (!interaction.isCommand()) return;
 
     const command = client.commands.get(interaction.commandName);
@@ -67,9 +64,9 @@ client.on('messageCreate', async (message) => {
     if (!message.guild) return;
     if (!client.application?.owner) await client.application?.fetch();
 
-    let args = message.content.slice(1).split(/ +/);
-    let commandName = args.shift().toLowerCase();
-    let command = client.commands.get(commandName);
+    const args = message.content.slice(1).split(/ +/);
+    const commandName = args.shift().toLowerCase();
+    const command = client.commands.get(commandName);
 
     if (command) {
         try {
@@ -82,19 +79,21 @@ client.on('messageCreate', async (message) => {
 
     // deploy new commands as interactions
     if (commandName === 'deploy' && message.author.id === client.application?.owner?.id) {
-        let commands = [];
-        console.log('Deploying Commands:')
-        client.commands.forEach((v, k) => {
-            console.log(v.data);
-            commands.push(v.data);
+        const commands = [];
+        console.log('Deploying Commands:');
+        client.commands.forEach((value) => {
+            console.log(value.data);
+            commands.push(value.data);
         });
         await client.application.commands.set(commands);
         await message.reply({ content: 'Deployed', ephemeral: true });
     }
+
     // print out registered commands
     if (commandName === 'commands') {
-        await client.application.commands.fetch()
-            .then(commands => {
+        await client.application.commands
+            .fetch()
+            .then((commands) => {
                 commands.forEach((command) => {
                     console.log(command.name);
                 });
