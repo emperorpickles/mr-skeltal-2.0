@@ -1,4 +1,5 @@
 const { ChannelType, PermissionsBitField } = require('discord.js');
+const { AudioPlayerStatus } = require('@discordjs/voice');
 const voice = require('./voiceManager');
 
 /**
