@@ -46,8 +46,15 @@ module.exports = {
                 await voice.playFile(player, './media/doot.ogg', undefined, true);
                 await voice.playerEnd(player);
 
-                connection.destroy();
-                player.stop();
+                // Only tear down the connection if bigDoots or other commands haven't stolen it.
+                const activePlayer = connection.state.subscription?.player;
+                if (activePlayer === player) {
+                    connection.destroy();
+                }
+
+                if (player.state.status !== AudioPlayerStatus.Idle) {
+                    player.stop(true);
+                }
             } catch (error) {
                 console.error(error);
             }

@@ -36,7 +36,6 @@ module.exports = {
             });
 
             await voice.playerEnd(player);
-            console.debug('Player ended!');
 
             if (connection) {
                 connection.destroy();

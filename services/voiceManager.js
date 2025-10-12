@@ -68,7 +68,6 @@ const waitForPlayerStart = async (player) => {
  * (for example, before destroying competing subscriptions).
  */
 const playFile = async (player, file, vol, waitForStart = false) => {
-    console.debug('Playing a file...');
     const resource = await createResource(file, vol);
     player.play(resource);
 
