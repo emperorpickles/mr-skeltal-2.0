@@ -1,6 +1,11 @@
 const { ChannelType, PermissionsBitField } = require('discord.js');
 const voice = require('./voiceManager');
 
+/**
+ * bigDoot
+ * Walks every populated voice channel, interrupting current playback (if any) with a priority doot.
+ * Reuses existing connections so we do not spawn multiple sockets per guild.
+ */
 module.exports = {
     bigDoot: (client) => {
         console.log('\n---Big Doot Incoming---');
@@ -27,11 +32,13 @@ module.exports = {
             try {
                 const player = voice.createPlayer();
 
+                // Reuse the guild connection when we're already in channel (e.g. a spoopy command in progress).
                 let connection = voice.getVoiceConnection(channel.guild.id);
                 if (!connection || connection.joinConfig.channelId !== channel.id) {
                     connection = await voice.connectToChannel(channel);
                 }
 
+                // Preempt whatever is currently streaming so the emergency doot cuts through immediately.
                 const currentSubscription = connection.state.subscription;
                 currentSubscription?.player?.stop(true);
 

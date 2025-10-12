@@ -4,6 +4,10 @@ const { AudioPlayerStatus } = require('@discordjs/voice');
 const path = require('node:path');
 const voice = require('../services/voiceManager');
 
+/**
+ * Slash command: /spoopy
+ * Layers a backing track while posting the dancing skeleton embed for maximum vibe.
+ */
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('spoopy')
@@ -32,6 +36,7 @@ module.exports = {
 
             const playerEndedPromise = voice.playerEnd(player);
             const connectionEndedPromise = voice.connectionEnd(connection);
+            // Whichever ends first (player finishes or connection drops) should trigger cleanup.
             const cleanupPromise = Promise.any([playerEndedPromise, connectionEndedPromise]);
 
             const replyMessage = await interaction.reply({
@@ -54,6 +59,7 @@ module.exports = {
 
             await playerEndedPromise;
 
+            // Only tear down the connection if bigDoots or other commands haven't stolen it.
             const activePlayer = connection.state.subscription?.player;
             if (activePlayer === player) {
                 connection.destroy();

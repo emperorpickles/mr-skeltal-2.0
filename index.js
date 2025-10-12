@@ -5,6 +5,8 @@ const { bigDoot } = require('./services/bigDoot');
 const fs = require('fs');
 require('dotenv').config();
 
+// Bootstrap the Discord client, register commands, and wire up both slash- and prefix-based handlers.
+
 // client creation
 const token = process.env.BOT_TOKEN;
 const client = new Client({
@@ -37,6 +39,7 @@ client.on('ready', async () => {
     console.log(`Connected to ${client.guilds.cache.size} server(s)`);
     console.log(`Current Doot Chance = ${dootChance * 100}%\nCurrent Doot Freq = ${dootFreq}min`);
 
+    // Periodically roll for a surprise big doot
     setInterval(() => {
         const rand = Math.random();
         console.log('Doot Roll: ' + rand);
@@ -64,6 +67,7 @@ client.on('messageCreate', async (message) => {
     if (!message.guild) return;
     if (!client.application?.owner) await client.application?.fetch();
 
+    // Keep supporting the original prefix commands while everything migrates to slash commands.
     const args = message.content.slice(1).split(/ +/);
     const commandName = args.shift().toLowerCase();
     const command = client.commands.get(commandName);
