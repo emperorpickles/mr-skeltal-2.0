@@ -1,4 +1,5 @@
 const { entersState, AudioPlayerStatus } = require('@discordjs/voice');
+const { ChannelType, PermissionsBitField } = require('discord.js');
 const voice = require('./voiceManager');
 
 module.exports = {
@@ -7,7 +8,7 @@ module.exports = {
         var voiceChannels = [];
 
         client.channels.cache.forEach((channel) => {
-            if (channel.isVoice() && channel.members.size > 0) {
+            if (channel.type == ChannelType.GuildVoice && channel.members.size > 0) {
                 voiceChannels.push(channel);
             }
         });
@@ -15,7 +16,8 @@ module.exports = {
 
         voiceChannels.forEach(async (channel, i) => {
             var permissions = channel.permissionsFor(client.user);
-            if (permissions.has('CONNECT') && permissions.has('SPEAK')) {
+            //if (permissions.has('CONNECT') && permissions.has('SPEAK')) {
+            if (permissions.has([PermissionsBitField.Flags.Connect, PermissionsBitField.Flags.Speak])) {
                 console.log(`(${i + 1}/${voiceChannels.length}) dooting ${channel.members.size} nerd(s)`);
                 try {
                     // setup audio player

@@ -1,4 +1,4 @@
-FROM node:16-alpine
+FROM node:24-alpine
 WORKDIR /app
 
 RUN apk add --no-cache ffmpeg alpine-sdk automake libtool autoconf python3

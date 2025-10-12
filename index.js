@@ -1,4 +1,4 @@
-const { Client, Collection } = require('discord.js');
+const { Client, Collection, GatewayIntentBits, Partials } = require('discord.js');
 const { AutoPoster } = require('topgg-autoposter');
 const { bigDoot } = require('./services/bigDoot');
 
@@ -7,7 +7,12 @@ require('dotenv').config();
 
 // client creation
 const token = process.env.BOT_TOKEN;
-const client = new Client({ intents: ['GUILDS', 'GUILD_MESSAGES', 'GUILD_VOICE_STATES'] });
+// const client = new Client({ intents: ['GUILDS', 'GUILD_MESSAGES', 'GUILD_VOICE_STATES'] });
+const client = new Client({
+	intents: [
+		GatewayIntentBits.Guilds
+	]
+});
 
 const dootChance = process.env.DOOT_CHANCE || 0.25;
 const dootFreq = process.env.DOOT_FREQ || 20;

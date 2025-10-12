@@ -14,6 +14,7 @@ module.exports = {
         return voice.createAudioResource(createReadStream(file, { inputType: voice.StreamType.OggOpus }));
     },
     playFile: (player, file, vol) => {
+	console.debug('Playing a file...')
         const resource = voice.createAudioResource((file || './media/doot.ogg'), { inputType: voice.StreamType.OggOpus, inlineVolume: true });
         resource.volume.setVolume(vol || 1);
         player.play(resource);

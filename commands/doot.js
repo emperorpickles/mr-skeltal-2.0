@@ -13,6 +13,7 @@ module.exports = {
         if (channel) {
             console.log('dooting');
             try {
+		await interaction.deferReply();
                 // play audio file
                 voice.playFile(player, './media/doot.ogg');
                 // join voice channel and play audio file
@@ -20,10 +21,15 @@ module.exports = {
                 const connection = voice.getVoiceConnection(channel.guildId);
                 connection.subscribe(player);
 
-                interaction.reply('DOOT DOOT');
+		player.on('error', (error) => {
+		    console.error('Error:', error.message, 'with track', error.resource.metadata.title);
+		});
+
                 await voice.playerEnd(player).then(() => {
+		    console.debug('Player ended!')
                     if (connection) connection.destroy();
                 });
+                interaction.editReply('DOOT DOOT');
             } catch (err) {
                 console.error(err);
             }
